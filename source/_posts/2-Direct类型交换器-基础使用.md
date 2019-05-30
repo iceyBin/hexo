@@ -1,11 +1,11 @@
 ---
-title: 2，Direct类型交换器-基础使用
+title: 2, Direct类型交换器-基础使用
 date: 2019-05-26 16:13:49
 tags: RabbitMQ
 categories: 中间件
 
 ---
-# Direct交换器
+# Direct交换器-基础使用
 ## 1 建立连接，获取信道
 
 **MQUtil.java**
@@ -50,8 +50,10 @@ categories: 中间件
 
 	// 定义交换器	
 	channel.exchangeDeclare(exchange, type, durable);
+
 	// 定义队列
     channel.queueDeclare(quueName, true, false, false, null);
+
 	// 将队列通过RoutingKey绑定到交换器上
     channel.queueBind(queue, exchange, routingKey);
 
@@ -72,17 +74,27 @@ categories: 中间件
 		// 手动确认消息的接收
         channel.basicAck(message.getEnvelope().getDeliveryTag(), false);
     };
+
 	// 消费消息
     channel.basicConsume(QUEUE_NAME, deliverCallback, (consumerTag) -> {
         System.err.println(String.format("系统异常，消费者[%s]不能正常消费消息", consumerTag));
     });
 
-消费消息的函数是 `basicConsume` 该函数定义如下：
+需要注意的是 `basicAck` 方法的第二个参数，这个参数标识是否要批量确认。如果设置为 `true` 则会批量确认所有该channel中已经到达MQ服务器的消息；如果设置为 `false`，则只确认指定的deliverTag对应的消息。
+
+再来看下消费消息的函数 `basicConsume` 定义如下：
 
 	String basicConsume(String queue, DeliverCallback deliverCallback, CancelCallback cancelCallback) throws IOException; 
+
+**该方法是一个无限循环阻塞方法，会循环获取绑定的队列中的消息**
 
 - queue：队列名称。 指定消费者从哪个队列中消费消息
 - deliverCallback: 消费者成功接收MQ推送的消息的回调函数，主要在该函数中进行消息的处理以及手动ack。该函数有个重载，多了一个 `autoAck` 参数，标识是否自动确认消息的接收。如果设置为 **true** 则当消费者正常接收到消息就会向MQ自动确认，MQ就会将该消息从消息队列中删除*(即使消息后续没有被成功消费)*， 默认false，一般情况下都会使用默认false。 如果设置为 `false` 就需要在 `deliverCallback` 回调函数中进行手动确认。
 - cancelCallback: 当MQ服务出现问题，导致不能正常消费消息 *(比如：队列被删除等)*，则会调用该回调函数。此外，消费者也可以调用 `channel.basicAck` 手动取消该消费者 
 
-**如果想要消息的持久化，必须保证交换器持久化、队列持久化**
+# 4 总结
+
+1. 生产者推送消息只需要 **RoutingKey** 和 **Exchange**
+2. 消费者建议手动 `ack` 确认，尽量保证消息不丢失
+3. 笔者建议生产者和消费者双方都需要进行创建队列的工作，因为不确定哪一方先启动
+4. 如果想要消息的持久化，必须保证交换器持久化、队列持久化
