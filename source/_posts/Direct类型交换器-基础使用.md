@@ -1,5 +1,5 @@
 ---
-title: 2, Direct类型交换器-基础使用
+title: Direct类型交换器-基础使用
 date: 2019-05-26 16:13:49
 tags: RabbitMQ
 categories: 中间件
