@@ -4,4 +4,4 @@ db.json
 *.log
 public/
 .deploy*/
-scaffolds/
+node_modules/
