@@ -95,10 +95,3 @@ lazyload:
   enable: true 
   onlypost: false
   loadingImg: ./themes/next/source/images/loading.gif
-  
-symbols_count_time:
-  symbols: true
-  time: true
-  total_symbols: true
-  total_time: true
-  exclude_codeblock: false
